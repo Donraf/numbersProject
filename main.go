@@ -2,90 +2,90 @@ package main
 
 import "fmt"
 
-type Operator struct {
-	Type     string
-	Number   int
-	Priority int
-}
-
-func GetOperators(operators *string, arr *string) []Operator {
-	operatorsSlice := make([]Operator, 0)
-	var number int = 1
-	var bracePriority int = 0
-	for _, elemInArr := range *arr {
-		if elemInArr == '(' {
-			bracePriority += 2
-		} else if elemInArr == ')' {
-			bracePriority -= 2
-		}
-		for _, operator := range *operators {
-			if elemInArr == operator {
-				var basePriority int = 0
-				switch elemInArr {
-				case '+':
-					basePriority = 0
-				case '-':
-					basePriority = 0
-				case '*':
-					basePriority = 1
-				case '/':
-					basePriority = 1
-				case '%':
-					basePriority = 1
-				case '^':
-					basePriority = 1
-				}
-				var newOperator Operator = Operator{
-					Type:     string(elemInArr),
-					Number:   number,
-					Priority: basePriority + bracePriority,
-				}
-				number++
-				operatorsSlice = append(operatorsSlice, newOperator)
-			}
-		}
-	}
-	SortOperators(&operatorsSlice)
-	return operatorsSlice
-}
-
-func SortOperators(operators *[]Operator) {
-	var operatorsNum int = len(*operators)
-	for i := 1; i < operatorsNum; i++ {
-		var operatorPriotiry int = (*operators)[i].Priority
-		for j := i - 1; j >= 0; j-- {
-			if operatorPriotiry > (*operators)[j].Priority {
-				(*operators)[j], (*operators)[j+1] = (*operators)[j+1], (*operators)[j]
-			}
-		}
-	}
-}
-
-func GetOperands(operators *string, arr *string) []string {
-	operatorSlice := make([]string, 0)
-	for _, elemInArr := range *arr {
-		for _, operator := range *operators {
-			if operator == elemInArr {
-				operatorSlice = append(operatorSlice, string(elemInArr))
-			}
-		}
-	}
-	return operatorSlice
-}
-
 func main() {
-	var operatorsSet string = "-+*/%^"
-	//var expression string = "1+2*9+2*(8+3)"
-	var expression string = "1*2(3*(4+5)*(5+6))*7"
-	var operatorsSlice []Operator
-	operatorsSlice = GetOperators(&operatorsSet, &expression)
-	operandsSlice := make([]int, len(operatorsSlice)+1)
-	fmt.Println(operatorsSlice)
-	fmt.Println(operandsSlice)
-	for i := 0; i < len(expression); i++ {
-		char := expression[i]
-		if char >= '0' && char <= '9' {
-			fmt.Println(char - '0')
+	//var expression string = "4+5*(1+2)*(9+3)/3"
+	var expression string = "-10+(-20+-30)-4+(5+(6-7)+8)"
+	var operators string = "+-*/"
+	var newStack Stack
+	var outString []string
+	var number string = ""
+	var prev string = ""
+	var flag bool = false
+	fmt.Println(expression, operators)
+	for _, char := range expression {
+		if prev == "-" ||
+			prev == "+" ||
+			prev == "*" ||
+			prev == "/" ||
+			prev == "^" ||
+			prev == "%" ||
+			prev == "(" ||
+			prev == "" {
+			flag = true
+		} else {
+			flag = false
 		}
+
+		if char >= '0' && char <= '9' {
+			number = number + string(char)
+		} else {
+			if flag && char == '-' {
+				number = number + string(char)
+			} else if number != "" {
+				outString = append(outString, number)
+				number = ""
+			}
+		}
+
+		switch char {
+		case '(':
+			newStack.Append(string(char))
+		case ')':
+			{
+				length := newStack.Len()
+				for i := length; i > 0; i-- {
+					outChar := newStack.Pop()
+					if outChar == "(" {
+						break
+					} else {
+						outString = append(outString[:], outChar)
+					}
+				}
+			}
+		case '-':
+			{
+				if flag {
+					continue
+				}
+				length := newStack.Len()
+				for i := length - 1; i >= 0; i-- {
+					if newStack.Get(newStack.Len()-1) != "(" {
+						outString = append(outString, newStack.Pop())
+					} else {
+						newStack.Pop()
+						break
+					}
+				}
+				newStack.Append(string(char))
+			}
+		case '+':
+			{
+				length := newStack.Len()
+				for i := length - 1; i >= 0; i-- {
+					if newStack.Get(newStack.Len()-1) != "(" {
+						outString = append(outString, newStack.Pop())
+					} else {
+						break
+					}
+				}
+				newStack.Append(string(char))
+			}
+		}
+		prev = string(char)
 	}
+	length := newStack.Len()
+	for i := length - 1; i >= 0; i-- {
+		outString = append(outString, newStack.Pop())
+	}
+	fmt.Println(outString)
 }
